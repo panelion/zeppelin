@@ -24,7 +24,7 @@
   <groupId>org.apache.zeppelin</groupId>
   <artifactId>zeppelin</artifactId>
   <packaging>pom</packaging>
-  <version>0.8.1-SNAPSHOT</version>
+  <version>0.8.1</version>
   <name>Zeppelin</name>
   <description>Zeppelin project</description>
   <url>http://zeppelin.apache.org</url>
@@ -95,7 +95,8 @@
     <!-- frontend maven plugin related versions-->
     <node.version>v8.9.3</node.version>
     <npm.version>5.5.1</npm.version>
-    <plugin.frontend.version>1.4</plugin.frontend.version>
+    <!--<plugin.frontend.version>1.4</plugin.frontend.version>-->
+    <plugin.frontend.version>1.5</plugin.frontend.version>
 
     <!-- common library versions -->
     <slf4j.version>1.7.10</slf4j.version>
