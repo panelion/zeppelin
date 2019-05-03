@@ -49,6 +49,7 @@ import org.apache.zeppelin.helium.HeliumBundleFactory;
 import org.apache.zeppelin.interpreter.InterpreterFactory;
 import org.apache.zeppelin.interpreter.InterpreterOutput;
 import org.apache.zeppelin.interpreter.InterpreterSettingManager;
+import org.apache.zeppelin.nexr.rest.NexRLoginRestApi;
 import org.apache.zeppelin.notebook.Notebook;
 import org.apache.zeppelin.notebook.NotebookAuthorization;
 import org.apache.zeppelin.notebook.repo.NotebookRepoSync;
@@ -466,6 +467,10 @@ public class ZeppelinServer extends Application {
 
     ConfigurationsRestApi settingsApi = new ConfigurationsRestApi(notebook);
     singletons.add(settingsApi);
+
+    // For NexR Constantine Project.
+    NexRLoginRestApi nexrLoginRestApi = new NexRLoginRestApi(notebook);
+    singletons.add(nexrLoginRestApi);
 
     return singletons;
   }
