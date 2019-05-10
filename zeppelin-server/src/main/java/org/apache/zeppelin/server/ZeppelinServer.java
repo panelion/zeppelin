@@ -17,23 +17,6 @@
 
 package org.apache.zeppelin.server;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.Set;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectName;
-import javax.servlet.DispatcherType;
-import javax.ws.rs.core.Application;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.UnavailableSecurityManagerException;
 import org.apache.shiro.realm.Realm;
@@ -53,15 +36,7 @@ import org.apache.zeppelin.nexr.rest.NexRLoginRestApi;
 import org.apache.zeppelin.notebook.Notebook;
 import org.apache.zeppelin.notebook.NotebookAuthorization;
 import org.apache.zeppelin.notebook.repo.NotebookRepoSync;
-import org.apache.zeppelin.rest.ConfigurationsRestApi;
-import org.apache.zeppelin.rest.CredentialRestApi;
-import org.apache.zeppelin.rest.HeliumRestApi;
-import org.apache.zeppelin.rest.InterpreterRestApi;
-import org.apache.zeppelin.rest.LoginRestApi;
-import org.apache.zeppelin.rest.NotebookRepoRestApi;
-import org.apache.zeppelin.rest.NotebookRestApi;
-import org.apache.zeppelin.rest.SecurityRestApi;
-import org.apache.zeppelin.rest.ZeppelinRestApi;
+import org.apache.zeppelin.rest.*;
 import org.apache.zeppelin.scheduler.SchedulerFactory;
 import org.apache.zeppelin.search.LuceneSearch;
 import org.apache.zeppelin.search.SearchService;
@@ -81,6 +56,18 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import zeppelin.server.ZeppelinGrpcServer;
+
+import javax.management.*;
+import javax.servlet.DispatcherType;
+import javax.ws.rs.core.Application;
+import java.io.File;
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Main class of Zeppelin.
@@ -168,7 +155,7 @@ public class ZeppelinServer extends Application {
         conf.getCredentialsEncryptKey());
     notebook = new Notebook(conf,
         notebookRepo, schedulerFactory, replFactory, interpreterSettingManager, notebookWsServer,
-            noteSearchService, notebookAuthorization, credentials);
+        noteSearchService, notebookAuthorization, credentials);
     this.configStorage = ConfigStorage.getInstance(conf);
 
     ZeppelinServer.helium = new Helium(
@@ -186,7 +173,7 @@ public class ZeppelinServer extends Application {
     } catch (Exception e) {
       LOG.error(e.getMessage(), e);
     }
-    
+
     // to update notebook from application event from remote process.
     heliumApplicationFactory.setNotebook(notebook);
     // to update fire websocket event on application event.
@@ -249,8 +236,19 @@ public class ZeppelinServer extends Application {
     }
     LOG.info("Done, zeppelin server started");
 
-    Runtime.getRuntime().addShutdownHook(new Thread(){
-      @Override public void run() {
+    // For NexR GRPC.
+    // TODO(David.Woo): 추후, Java reflection 을 활용하여 해당 클래스가 존재하는지 여부를 파악,
+    // 존재한다면 gRPC 서버 Launching, 존재하지 않는다면 SKIP 하는 방안 강구
+    try {
+      ZeppelinGrpcServer zeppelinGrpcServer = new ZeppelinGrpcServer(50051, notebook);
+      zeppelinGrpcServer.start();
+    } catch (IOException e) {
+      LOG.error("Could not created NexR zeppelin grpc server.", e);
+    }
+
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+      @Override
+      public void run() {
         LOG.info("Shutting down Zeppelin Server ... ");
         try {
           jettyWebServer.stop();
@@ -306,9 +304,9 @@ public class ZeppelinServer extends Application {
       httpsConfig.addCustomizer(src);
 
       connector = new ServerConnector(
-              server,
-              new SslConnectionFactory(getSslContextFactory(conf), HttpVersion.HTTP_1_1.asString()),
-              new HttpConnectionFactory(httpsConfig));
+          server,
+          new SslConnectionFactory(getSslContextFactory(conf), HttpVersion.HTTP_1_1.asString()),
+          new HttpConnectionFactory(httpsConfig));
     } else {
       connector = new ServerConnector(server);
     }
@@ -333,7 +331,7 @@ public class ZeppelinServer extends Application {
   private static void configureRequestHeaderSize(ZeppelinConfiguration conf,
                                                  ServerConnector connector) {
     HttpConnectionFactory cf = (HttpConnectionFactory)
-            connector.getConnectionFactory(HttpVersion.HTTP_1_1.toString());
+        connector.getConnectionFactory(HttpVersion.HTTP_1_1.toString());
     int requestHeaderSize = conf.getJettyRequestHeaderSize();
     cf.getHttpConfiguration().setRequestHeaderSize(requestHeaderSize);
   }
@@ -376,7 +374,7 @@ public class ZeppelinServer extends Application {
                                                  ZeppelinConfiguration conf) {
 
     final ServletHolder servletHolder = new ServletHolder(
-            new org.glassfish.jersey.servlet.ServletContainer());
+        new org.glassfish.jersey.servlet.ServletContainer());
 
     servletHolder.setInitParameter("javax.ws.rs.Application", ZeppelinServer.class.getName());
     servletHolder.setName("rest");
@@ -390,7 +388,7 @@ public class ZeppelinServer extends Application {
       webapp.setInitParameter("shiroConfigLocations", new File(shiroIniPath).toURI().toString());
       SecurityUtils.setIsEnabled(true);
       webapp.addFilter(ShiroFilter.class, "/api/*", EnumSet.allOf(DispatcherType.class))
-              .setInitParameter("staticSecurityManagerEnabled", "true");
+          .setInitParameter("staticSecurityManagerEnabled", "true");
       webapp.addEventListener(new EnvironmentLoaderListener());
     }
   }
@@ -422,7 +420,7 @@ public class ZeppelinServer extends Application {
         EnumSet.allOf(DispatcherType.class));
 
     webApp.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed",
-            Boolean.toString(conf.getBoolean(ConfVars.ZEPPELIN_SERVER_DEFAULT_DIR_ALLOWED)));
+        Boolean.toString(conf.getBoolean(ConfVars.ZEPPELIN_SERVER_DEFAULT_DIR_ALLOWED)));
 
     return webApp;
 
@@ -443,7 +441,7 @@ public class ZeppelinServer extends Application {
     singletons.add(root);
 
     NotebookRestApi notebookApi
-      = new NotebookRestApi(notebook, notebookWsServer, noteSearchService);
+        = new NotebookRestApi(notebook, notebookWsServer, noteSearchService);
     singletons.add(notebookApi);
 
     NotebookRepoRestApi notebookRepoApi = new NotebookRepoRestApi(notebookRepo, notebookWsServer);
@@ -477,6 +475,7 @@ public class ZeppelinServer extends Application {
 
   /**
    * Check if it is source build or binary package
+   *
    * @return
    */
   private static boolean isBinaryPackage(ZeppelinConfiguration conf) {
