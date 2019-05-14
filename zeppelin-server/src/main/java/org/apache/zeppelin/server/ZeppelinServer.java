@@ -17,6 +17,7 @@
 
 package org.apache.zeppelin.server;
 
+import com.nexr.constantine.common.zeppelin.grpc.server.ZeppelinGrpcServer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.UnavailableSecurityManagerException;
 import org.apache.shiro.realm.Realm;
@@ -56,7 +57,6 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import zeppelin.server.ZeppelinGrpcServer;
 
 import javax.management.*;
 import javax.servlet.DispatcherType;
@@ -94,7 +94,7 @@ public class ZeppelinServer extends Application {
     if (conf.getShiroPath().length() > 0) {
       try {
         Collection<Realm> realms = ((DefaultWebSecurityManager) org.apache.shiro.SecurityUtils
-            .getSecurityManager()).getRealms();
+          .getSecurityManager()).getRealms();
         if (realms.size() > 1) {
           Boolean isIniRealmEnabled = false;
           for (Object realm : realms) {
@@ -105,7 +105,7 @@ public class ZeppelinServer extends Application {
           }
           if (isIniRealmEnabled) {
             throw new Exception("IniRealm/password based auth mechanisms should be exclusive. "
-                + "Consider removing [users] block from shiro.ini");
+              + "Consider removing [users] block from shiro.ini");
           }
         }
       } catch (UnavailableSecurityManagerException e) {
@@ -126,46 +126,46 @@ public class ZeppelinServer extends Application {
        * packaged into binary package.
        */
       heliumBundleFactory = new HeliumBundleFactory(
-          conf,
-          null,
-          new File(conf.getRelativeDir(ConfVars.ZEPPELIN_DEP_LOCALREPO)),
-          new File(conf.getRelativeDir("lib/node_modules/zeppelin-tabledata")),
-          new File(conf.getRelativeDir("lib/node_modules/zeppelin-vis")),
-          new File(conf.getRelativeDir("lib/node_modules/zeppelin-spell")));
+        conf,
+        null,
+        new File(conf.getRelativeDir(ConfVars.ZEPPELIN_DEP_LOCALREPO)),
+        new File(conf.getRelativeDir("lib/node_modules/zeppelin-tabledata")),
+        new File(conf.getRelativeDir("lib/node_modules/zeppelin-vis")),
+        new File(conf.getRelativeDir("lib/node_modules/zeppelin-spell")));
     } else {
       heliumBundleFactory = new HeliumBundleFactory(
-          conf,
-          null,
-          new File(conf.getRelativeDir(ConfVars.ZEPPELIN_DEP_LOCALREPO)),
-          new File(conf.getRelativeDir("zeppelin-web/src/app/tabledata")),
-          new File(conf.getRelativeDir("zeppelin-web/src/app/visualization")),
-          new File(conf.getRelativeDir("zeppelin-web/src/app/spell")));
+        conf,
+        null,
+        new File(conf.getRelativeDir(ConfVars.ZEPPELIN_DEP_LOCALREPO)),
+        new File(conf.getRelativeDir("zeppelin-web/src/app/tabledata")),
+        new File(conf.getRelativeDir("zeppelin-web/src/app/visualization")),
+        new File(conf.getRelativeDir("zeppelin-web/src/app/spell")));
     }
 
     this.schedulerFactory = SchedulerFactory.singleton();
     this.interpreterSettingManager = new InterpreterSettingManager(conf, notebookWsServer,
-        notebookWsServer, notebookWsServer);
+      notebookWsServer, notebookWsServer);
     this.replFactory = new InterpreterFactory(interpreterSettingManager);
     this.notebookRepo = new NotebookRepoSync(conf);
     this.noteSearchService = new LuceneSearch();
     this.notebookAuthorization = NotebookAuthorization.getInstance();
     this.credentials = new Credentials(
-        conf.credentialsPersist(),
-        conf.getCredentialsPath(),
-        conf.getCredentialsEncryptKey());
+      conf.credentialsPersist(),
+      conf.getCredentialsPath(),
+      conf.getCredentialsEncryptKey());
     notebook = new Notebook(conf,
-        notebookRepo, schedulerFactory, replFactory, interpreterSettingManager, notebookWsServer,
-        noteSearchService, notebookAuthorization, credentials);
+      notebookRepo, schedulerFactory, replFactory, interpreterSettingManager, notebookWsServer,
+      noteSearchService, notebookAuthorization, credentials);
     this.configStorage = ConfigStorage.getInstance(conf);
 
     ZeppelinServer.helium = new Helium(
-        conf.getHeliumConfPath(),
-        conf.getHeliumRegistry(),
-        new File(conf.getRelativeDir(ConfVars.ZEPPELIN_DEP_LOCALREPO),
-            "helium-registry-cache"),
-        heliumBundleFactory,
-        heliumApplicationFactory,
-        interpreterSettingManager);
+      conf.getHeliumConfPath(),
+      conf.getHeliumRegistry(),
+      new File(conf.getRelativeDir(ConfVars.ZEPPELIN_DEP_LOCALREPO),
+        "helium-registry-cache"),
+      heliumBundleFactory,
+      heliumApplicationFactory,
+      interpreterSettingManager);
 
     // create bundle
     try {
@@ -187,16 +187,16 @@ public class ZeppelinServer extends Application {
       MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
       try {
         mBeanServer.registerMBean(
-            notebookWsServer,
-            new ObjectName("org.apache.zeppelin:type=" + NotebookServer.class.getSimpleName()));
+          notebookWsServer,
+          new ObjectName("org.apache.zeppelin:type=" + NotebookServer.class.getSimpleName()));
         mBeanServer.registerMBean(
-            interpreterSettingManager,
-            new ObjectName(
-                "org.apache.zeppelin:type=" + InterpreterSettingManager.class.getSimpleName()));
+          interpreterSettingManager,
+          new ObjectName(
+            "org.apache.zeppelin:type=" + InterpreterSettingManager.class.getSimpleName()));
       } catch (InstanceAlreadyExistsException
-          | MBeanRegistrationException
-          | MalformedObjectNameException
-          | NotCompliantMBeanException e) {
+        | MBeanRegistrationException
+        | MalformedObjectNameException
+        | NotCompliantMBeanException e) {
         LOG.error("Failed to register MBeans", e);
       }
     }
@@ -304,9 +304,9 @@ public class ZeppelinServer extends Application {
       httpsConfig.addCustomizer(src);
 
       connector = new ServerConnector(
-          server,
-          new SslConnectionFactory(getSslContextFactory(conf), HttpVersion.HTTP_1_1.asString()),
-          new HttpConnectionFactory(httpsConfig));
+        server,
+        new SslConnectionFactory(getSslContextFactory(conf), HttpVersion.HTTP_1_1.asString()),
+        new HttpConnectionFactory(httpsConfig));
     } else {
       connector = new ServerConnector(server);
     }
@@ -331,7 +331,7 @@ public class ZeppelinServer extends Application {
   private static void configureRequestHeaderSize(ZeppelinConfiguration conf,
                                                  ServerConnector connector) {
     HttpConnectionFactory cf = (HttpConnectionFactory)
-        connector.getConnectionFactory(HttpVersion.HTTP_1_1.toString());
+      connector.getConnectionFactory(HttpVersion.HTTP_1_1.toString());
     int requestHeaderSize = conf.getJettyRequestHeaderSize();
     cf.getHttpConfiguration().setRequestHeaderSize(requestHeaderSize);
   }
@@ -344,7 +344,7 @@ public class ZeppelinServer extends Application {
     servletHolder.setInitParameter("maxTextMessageSize", maxTextMessageSize);
 
     final ServletContextHandler context = new ServletContextHandler(
-        ServletContextHandler.SESSIONS);
+      ServletContextHandler.SESSIONS);
 
     webapp.addServlet(servletHolder, "/ws/*");
   }
@@ -374,7 +374,7 @@ public class ZeppelinServer extends Application {
                                                  ZeppelinConfiguration conf) {
 
     final ServletHolder servletHolder = new ServletHolder(
-        new org.glassfish.jersey.servlet.ServletContainer());
+      new org.glassfish.jersey.servlet.ServletContainer());
 
     servletHolder.setInitParameter("javax.ws.rs.Application", ZeppelinServer.class.getName());
     servletHolder.setName("rest");
@@ -388,7 +388,7 @@ public class ZeppelinServer extends Application {
       webapp.setInitParameter("shiroConfigLocations", new File(shiroIniPath).toURI().toString());
       SecurityUtils.setIsEnabled(true);
       webapp.addFilter(ShiroFilter.class, "/api/*", EnumSet.allOf(DispatcherType.class))
-          .setInitParameter("staticSecurityManagerEnabled", "true");
+        .setInitParameter("staticSecurityManagerEnabled", "true");
       webapp.addEventListener(new EnvironmentLoaderListener());
     }
   }
@@ -417,10 +417,10 @@ public class ZeppelinServer extends Application {
     contexts.addHandler(webApp);
 
     webApp.addFilter(new FilterHolder(CorsFilter.class), "/*",
-        EnumSet.allOf(DispatcherType.class));
+      EnumSet.allOf(DispatcherType.class));
 
     webApp.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed",
-        Boolean.toString(conf.getBoolean(ConfVars.ZEPPELIN_SERVER_DEFAULT_DIR_ALLOWED)));
+      Boolean.toString(conf.getBoolean(ConfVars.ZEPPELIN_SERVER_DEFAULT_DIR_ALLOWED)));
 
     return webApp;
 
@@ -441,7 +441,7 @@ public class ZeppelinServer extends Application {
     singletons.add(root);
 
     NotebookRestApi notebookApi
-        = new NotebookRestApi(notebook, notebookWsServer, noteSearchService);
+      = new NotebookRestApi(notebook, notebookWsServer, noteSearchService);
     singletons.add(notebookApi);
 
     NotebookRepoRestApi notebookRepoApi = new NotebookRepoRestApi(notebookRepo, notebookWsServer);
@@ -451,7 +451,7 @@ public class ZeppelinServer extends Application {
     singletons.add(heliumApi);
 
     InterpreterRestApi interpreterApi = new InterpreterRestApi(interpreterSettingManager,
-        notebookWsServer);
+      notebookWsServer);
     singletons.add(interpreterApi);
 
     CredentialRestApi credentialApi = new CredentialRestApi(credentials);
