@@ -16,21 +16,22 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <artifactId>zeppelin</artifactId>
         <groupId>org.apache.zeppelin</groupId>
-        <version>0.8.1-NR</version>
+        <version>0.8.1-NR-SNAPSHOT</version>
         <relativePath>..</relativePath>
     </parent>
 
     <groupId>org.apache.zeppelin</groupId>
     <artifactId>zeppelin-server</artifactId>
     <packaging>jar</packaging>
-    <version>0.8.1-NR</version>
+    <version>0.8.1-NR-SNAPSHOT</version>
     <name>Zeppelin: Server</name>
 
     <properties>
@@ -469,7 +470,8 @@
                         <phase>pre-integration-test</phase>
                         <configuration>
                             <target unless="skipTests">
-                                <exec executable="./zeppelin-daemon.sh" dir="${zeppelin.daemon.package.base}"
+                                <exec executable="./zeppelin-daemon.sh"
+                                      dir="${zeppelin.daemon.package.base}"
                                       spawn="true">
                                     <arg value="start"/>
                                 </exec>
@@ -485,7 +487,8 @@
                         <phase>post-integration-test</phase>
                         <configuration>
                             <target unless="skipTests">
-                                <exec executable="./zeppelin-daemon.sh" dir="${zeppelin.daemon.package.base}"
+                                <exec executable="./zeppelin-daemon.sh"
+                                      dir="${zeppelin.daemon.package.base}"
                                       spawn="false">
                                     <arg value="stop"/>
                                 </exec>
@@ -502,7 +505,44 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
             </plugin>
-
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <inherited>false</inherited>
+                <configuration>
+                    <altSnapshotDeploymentRepository>
+                        nexr-snapshots::default::http://nexus.nexrcorp.com:8080/nexus/content/repositories/snapshots
+                    </altSnapshotDeploymentRepository>
+                    <altReleaseDeploymentRepository>
+                        nexr-releases::default::http://nexus.nexrcorp.com:8080/nexus/content/repositories/releases
+                    </altReleaseDeploymentRepository>
+                    <sources>
+                        ${project.build.directory}/zeppelin-server-${project.version}-sources.jar
+                    </sources>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>deploy</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>deploy</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
@@ -513,7 +553,8 @@
                 <dependencies>
                     <dependency>
                         <groupId>org.scala-lang.modules</groupId>
-                        <artifactId>scala-xml_${scala.binary.version}</artifactId>
+                        <artifactId>scala-xml_${scala.binary.version}
+                        </artifactId>
                         <version>1.0.2</version>
                     </dependency>
                 </dependencies>
